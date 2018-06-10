@@ -1,18 +1,19 @@
 package com.chengxiang.i2cdemo;
 
-import android.support.v7.app.AppCompatActivity;
+
+import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
 import com.google.android.things.pio.I2cDevice;
-import com.google.android.things.pio.PeripheralManagerService;
+import com.google.android.things.pio.PeripheralManager;
 
 import java.io.IOException;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
-    private static final String I2C_ADDRESS = "I2C1";
-    private static final int TEMPERATURE_SENSOR_SLAVE = 0x77;
+public class MainActivity extends Activity {
+    private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REGISTER_TEMPERATURE_CALIBRATION_1 = 0x88;
     private static final int REGISTER_TEMPERATURE_CALIBRATION_2 = 0x8A;
     private static final int REGISTER_TEMPERATURE_CALIBRATION_3 = 0x8C;
@@ -26,15 +27,16 @@ public class MainActivity extends AppCompatActivity {
 
     private final short[] calibrationData = new short[3];
 
+    private static final String I2C_ADDRESS = "I2C1";
+    private static final int TEMPERATURE_SENSOR_SLAVE = 0x77;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        temperatureTextView = (TextView) findViewById(R.id.temperature);
-
-        PeripheralManagerService peripheralManagerService = new PeripheralManagerService();
+        temperatureTextView =  findViewById(R.id.temperature);
+        PeripheralManager manager = PeripheralManager.getInstance();
         try {
-            i2cDevice = peripheralManagerService.openI2cDevice(I2C_ADDRESS, TEMPERATURE_SENSOR_SLAVE);
+            i2cDevice = manager.openI2cDevice(I2C_ADDRESS, TEMPERATURE_SENSOR_SLAVE);
             calibrationData[0] = i2cDevice.readRegWord(REGISTER_TEMPERATURE_CALIBRATION_1);
             calibrationData[1] = i2cDevice.readRegWord(REGISTER_TEMPERATURE_CALIBRATION_2);
             calibrationData[2] = i2cDevice.readRegWord(REGISTER_TEMPERATURE_CALIBRATION_3);
@@ -44,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
             if (data.length != 0) {
                 float temperature = compensateTemperature(readSample(data));
                 temperatureTextView.setText("temperature:" + temperature);
+                Log.v(TAG,"temperature:" + temperature);
             }
         } catch (IOException e) {
             e.printStackTrace();
